@@ -1,0 +1,40 @@
+package kr.nerd_lab.command;
+
+public class CommandTemplatePractice {
+    public static void main(String[] args) {
+        args = new String[]{
+                "--copy", "--input", "a", "--output", "b"
+        };
+
+
+        CommandTemplate<String> commandTemplate =
+                new CommandTemplate<String>()
+                        .operation(
+                                "copy",
+                                commandOption ->
+                                        commandOption.description("")
+                                                .option("input", "복사 할 대상")
+                                                .option("output", "이동 할 위치")
+                                                .action(
+                                                        options -> {
+                                                            StringBuilder builder = new StringBuilder();
+
+                                                            String input = options.get("input");
+                                                            String output = options.get("output");
+
+                                                            builder.append("input = ").append(input).append("\n")
+                                                                    .append("output = ").append(output);
+
+                                                            System.out.println(builder);
+
+                                                            return builder.toString();
+                                                        })
+                        );
+        try {
+            String result = commandTemplate.args(args).result();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        commandTemplate.args("--help");
+    }
+}
