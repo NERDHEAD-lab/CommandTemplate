@@ -1,23 +1,16 @@
 package kr.nerd_lab.command;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CommandOption implements CommandExecutor, CommandOptionTemplate {
+public class CommandOption<Result> implements CommandExecutor, CommandOptionTemplate<Result> {
     private String description;
-    private final HashMap<String, String> options = new HashMap<>();
+    private final Options options = new Options();
     private final Map<String, String> optionDescriptions = new HashMap<>();
-    private Action action;
+    private Action<Result> action;
 
-    private CommandOption() {
+    protected CommandOption() {
 
-    }
-
-    public static CommandOptionTemplate create() {
-        return new CommandOption();
     }
 
     public boolean contains(String option) {
@@ -28,25 +21,18 @@ public class CommandOption implements CommandExecutor, CommandOptionTemplate {
         options.put(option, value);
     }
 
-    public CommandOption action(Action action) {
+    @Override
+    public CommandOption<Result> action(Action<Result> action) {
         initAction(action);
         return this;
     }
 
-    private void initAction(Action action) {
-        try {
-            Method commandExecutorField = Action.class.getDeclaredMethod("setOptions", HashMap.class);
-            commandExecutorField.setAccessible(true);
-            commandExecutorField.invoke( action, options);
-        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
-
+    private void initAction(Action<Result> action) {
         this.action = action;
     }
 
-    public void execute() {
-        action._run();
+    public Result execute() throws Throwable {
+        return action.run(options);
     }
 
     @Override
@@ -54,14 +40,14 @@ public class CommandOption implements CommandExecutor, CommandOptionTemplate {
         return options.get(option);
     }
 
-    public CommandOption option(String option, String description) {
+    public CommandOption<Result> option(String option, String description) {
         options.put(option, null);
         optionDescriptions.put(option, description);
 
         return this;
     }
 
-    public CommandOption description(String description) {
+    public CommandOption<Result> description(String description) {
         this.description = description;
         return this;
     }
@@ -72,5 +58,25 @@ public class CommandOption implements CommandExecutor, CommandOptionTemplate {
 
     public Map<String, String> getOptionDescriptions() {
         return optionDescriptions;
+    }
+
+    static class Options {
+        private final HashMap<String, String> options = new HashMap<>();
+
+        public String get(String option) {
+            return getAsString(option);
+        }
+
+        public String getAsString(String option) {
+            return options.get(option);
+        }
+
+        private boolean containsKey(String option) {
+            return options.containsKey(option);
+        }
+
+        private void put(String option, String value) {
+            options.put(option, value);
+        }
     }
 }

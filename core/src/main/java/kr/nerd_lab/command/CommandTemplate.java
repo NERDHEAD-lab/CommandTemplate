@@ -5,22 +5,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CommandTemplate<Result> {
+public class CommandTemplate<Result> implements CommandResult<Result> {
     private static String PREFIX_OPERATION = "--";
     private static String PREFIX_OPTION = "--";
-    private final Map<String, CommandOption> operations;
+    private final Map<String, CommandOption<Result>> operations;
     private ArgumentBinder binder;
+    private Throwable error;
+    private Result result;
 
-    private CommandTemplate() {
+    public CommandTemplate() {
         operations = new HashMap<>();
     }
 
-    public static <Result> CommandTemplate<Result> create(Result t) {
-        return new CommandTemplate<>();
-    }
-
-    public CommandTemplate<Result> operation(String operation, CommandOptionTemplate commandOption) {
-        operations.put(operation, (CommandOption)commandOption);
+    public CommandTemplate<Result> operation(String operation, CommandOperation<Result> commandOption) {
+        operations.put(operation, (CommandOption<Result>) commandOption.operation(new CommandOption<Result>()));
         return this;
     }
 
@@ -32,7 +30,7 @@ public class CommandTemplate<Result> {
     }
 
 
-    public void args(String... args) {
+    public CommandTemplate<Result> args(String... args) {
         List<String> argumentList = Arrays.asList(args);
 
         binder = new ArgumentBinder();
@@ -40,12 +38,16 @@ public class CommandTemplate<Result> {
         argumentList.stream()
                 .map(String::trim)
                 .forEach(binder::bindArguments);
-
-        execute();
+        try {
+            this.result = execute();
+        } catch (Throwable e) {
+            this.error = e;
+        }
+        return this;
     }
 
-    private void execute() {
-        binder.execute();
+    private Result execute() throws Throwable {
+        return binder.execute();
     }
 
     private void help() {
@@ -62,22 +64,29 @@ public class CommandTemplate<Result> {
             options.getOptionDescriptions()
                     .forEach((option, description)
                             -> builder.append("\t")
-                                        .append(PREFIX_OPTION)
-                                        .append(option)
-                                        .append(" : ")
-                                        .append(description)
-                                        .append("\n")
+                            .append(PREFIX_OPTION)
+                            .append(option)
+                            .append(" : ")
+                            .append(description)
+                            .append("\n")
                     );
 
             System.out.println(builder);
         });
     }
 
+    @Override
+    public Result result() throws Throwable {
+        if (error != null) {
+            throw error;
+        }
+        return result;
+    }
 
     private class ArgumentBinder {
         private int current = 0;
         private int at;
-        private CommandOption currentCommandOption;
+        private CommandOption<Result> currentCommandOption;
 
         String operation;
         String option;
@@ -101,7 +110,7 @@ public class CommandTemplate<Result> {
             }
             if (operations.containsKey(operation)) {
                 currentCommandOption = operations.get(operation);
-            } else if(operation.equals("help")){
+            } else if (operation.equals("help")) {
                 CommandTemplate.this.help();
                 System.exit(0);
             } else {
@@ -126,8 +135,8 @@ public class CommandTemplate<Result> {
             }
         }
 
-        public void execute() {
-            currentCommandOption.execute();
+        public Result execute() throws Throwable {
+            return currentCommandOption.execute();
         }
 
 
@@ -139,6 +148,7 @@ public class CommandTemplate<Result> {
         private void fire(String operation) {
             fire(operation, null);
         }
+
         //TODO : exit with Enum. cause print errorCode List with exitCode
         private void fire(String operation, String option) {
             CommandTemplate.this.help();
