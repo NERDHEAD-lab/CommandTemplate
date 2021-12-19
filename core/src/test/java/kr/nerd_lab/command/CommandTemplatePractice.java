@@ -8,7 +8,7 @@ public class CommandTemplatePractice {
 //        };
 
         CommandTemplate<String> commandTemplate =
-                new CommandTemplate<String>()
+                CommandTemplate.create(String.class)
                         .operation(
                                 "copy",
                                 commandOption ->

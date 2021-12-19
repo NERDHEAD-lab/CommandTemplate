@@ -17,6 +17,10 @@ public class CommandTemplate<Result> implements CommandResult<Result> {
         operations = new HashMap<>();
     }
 
+    public static <Result> CommandTemplate<Result> create(Class<Result> clazz){
+        return new CommandTemplate<>();
+    }
+
     public CommandTemplate<Result> operation(String operation, CommandOperation<Result> commandOption) {
         operations.put(operation, (CommandOption<Result>) commandOption.operation(new CommandOption<Result>()));
         return this;
