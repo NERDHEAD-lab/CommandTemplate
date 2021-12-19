@@ -2,10 +2,10 @@ package kr.nerd_lab.command;
 
 public class CommandTemplatePractice {
     public static void main(String[] args) {
-        args = new String[]{
-                "--copy", "--input", "a", "--output", "b"
-        };
-
+        args = "--copy --input a --output b".trim().split(" ");
+//                new String[]{
+//                "--copy", "--input", "a", "--output", "b"
+//        };
 
         CommandTemplate<String> commandTemplate =
                 new CommandTemplate<String>()
