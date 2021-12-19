@@ -25,13 +25,14 @@ public class CommandTemplatePractice {
                                                             builder.append("input = ").append(input).append("\n")
                                                                     .append("output = ").append(output);
 
-                                                            System.out.println(builder);
-
                                                             return builder.toString();
                                                         })
                         );
+
+
         try {
             String result = commandTemplate.args(args).result();
+            System.out.println(result);
         } catch (Throwable e) {
             e.printStackTrace();
         }
